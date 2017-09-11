@@ -282,11 +282,9 @@ func (srv *PBServer) determineNewViewLog(successReplies []*ViewChangeReply) (
 // ViewChange is the RPC handler to process ViewChange RPC.
 func (srv *PBServer) ViewChange(args *ViewChangeArgs, reply *ViewChangeReply) {
 	// Your code here
-	// Note: copy your log to the view change reply, do not merely pass the pointer by doing reply.Log = srv.log
 }
 
 // StartView is the RPC handler to process StartView RPC.
 func (srv *PBServer) StartView(args *StartViewArgs, reply *StartViewReply) {
 	// Your code here
-	// Note: copy log to be this server's log, do not merely pass pointer by doing srv.log = args.Log
 }
