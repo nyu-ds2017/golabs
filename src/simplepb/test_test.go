@@ -86,20 +86,17 @@ func Test1AFailButCommitPB(t *testing.T) {
 
 		go func() {
 			defer wg.Done()
+			time.Sleep(100 * time.Millisecond)
 			// re-connect
 			cfg.connect((primaryID + 1) % servers)
 
-			// do all servers agree?
 			if _, _, ok := cfg.pbservers[primaryID].Start(3004 + i); !ok {
 				t.Fatalf("node-%d rejected command %d\n", primaryID, 3004+i)
-			}
-			if _, _, ok := cfg.pbservers[primaryID].Start(3005 + i); !ok {
-				t.Fatalf("node-%d rejected command %d\n", primaryID, 3005+i)
 			}
 		}()
 
 		wg.Wait()
-		cfg.waitCommitted(primaryID, 5+i)
+		cfg.replicateOne(primaryID, 3005, servers)
 		// check that all servers replicate the same sequence of commands
 		var command interface{}
 		for index := 1; index <= 5+i; index++ {
