@@ -282,5 +282,5 @@ func (cfg *config) viewChange(newView int) {
 		}
 		time.Sleep(80 * time.Millisecond)
 	}
-	cfg.t.Fatal("timed out waiting for view %d change to complete at node-%d\n", newView, primary)
+	cfg.t.Fatalf("timed out waiting for view %d change to complete at node-%d\n", newView, primary)
 }

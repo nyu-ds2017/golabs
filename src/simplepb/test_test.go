@@ -138,40 +138,27 @@ func Test1AFailNoCommitPB(t *testing.T) {
 	cfg.connect((primaryID + 1) % servers)
 	cfg.connect((primaryID + 2) % servers)
 
-	index2, _, ok2 := cfg.pbservers[primaryID].Start(4003)
-	if !ok2 {
-		t.Fatalf("primary rejected command\n")
-	}
-	if index2 != 3 {
-		t.Fatalf("unexpected index %v\n", index2)
-	}
-
-	cfg.replicateOne(primaryID, 4004, servers)
+	cfg.replicateOne(primaryID, 4003, servers)
+	index = cfg.replicateOne(primaryID, 4004, servers)
 
 	// disconnect the primary
 	cfg.disconnect(primaryID)
-	index3, _, ok3 := cfg.pbservers[primaryID].Start(4005)
-	if !ok3 {
+	index2, _, ok := cfg.pbservers[primaryID].Start(4005)
+	if !ok {
 		t.Fatalf("primary rejected command\n")
 	}
-	if index3 != 5 {
-		t.Fatalf("unexpected index %v\n", index3)
+	if index2 != (index + 1) {
+		t.Fatalf("primary put command at unexpected pos %d\n", index2)
 	}
 	time.Sleep(2 * time.Second)
-	committed = cfg.pbservers[primaryID].IsCommitted(index3)
+	committed = cfg.pbservers[primaryID].IsCommitted(index2)
 	if committed {
-		t.Fatalf("index %d is incorrectly considered to have been committed\n", index3)
+		t.Fatalf("index %d is incorrectly considered to have been committed\n", index2)
 	}
 
 	// reconnect primary
 	cfg.connect(primaryID)
-	index4, _, ok4 := cfg.pbservers[primaryID].Start(4006)
-	if !ok4 {
-		t.Fatalf("primary rejected command\n")
-	}
-	if index4 != 6 {
-		t.Fatalf("unexpected index %v\n", index3)
-	}
+	cfg.replicateOne(primaryID, 4006, servers)
 	cfg.replicateOne(primaryID, 4007, servers)
 
 	fmt.Printf(" ... Passed\n")
