@@ -7,6 +7,10 @@ import (
 	"time"
 )
 
+func majority(nservers int) int {
+	return nservers/2 + 1
+}
+
 func Test1ABasicPB(t *testing.T) {
 	servers := 3                        //3 servers
 	primaryID := GetPrimary(0, servers) //primary ID is determined by view=0
@@ -30,10 +34,6 @@ func Test1AConcurrentPB(t *testing.T) {
 
 	tries := 5
 	for try := 0; try < tries; try++ {
-		if try > 0 {
-			// give solution some time to settle
-			time.Sleep(3 * time.Second)
-		}
 		var wg sync.WaitGroup
 		iters := 5
 		for i := 0; i < iters; i++ {
@@ -50,10 +50,11 @@ func Test1AConcurrentPB(t *testing.T) {
 
 		// wait for index (try + 1) * iters to be considered committed
 		cfg.waitCommitted(primaryID, (try+1)*iters)
+
 		// check that committed indexes [try*iters, (try+1)*iters] are identical at all servers
 		var command interface{}
 		for index := 1 + try*iters; index <= (try+1)*iters; index++ {
-			cfg.checkCommittedIndex(index, command, servers)
+			cfg.checkCommittedIndex(index, command, majority(servers))
 		}
 	}
 	fmt.Printf(" ... Passed\n")
@@ -102,6 +103,7 @@ func Test1AFailButCommitPB(t *testing.T) {
 		for index := 1; index <= 5+i; index++ {
 			cfg.checkCommittedIndex(index, command, servers)
 		}
+		fmt.Printf("iteration i=%d finished\n", i)
 	}
 
 	fmt.Printf("  ... Passed\n")
@@ -177,8 +179,8 @@ func Test1BSimpleViewChange(t *testing.T) {
 	transientBackup := (oldPrimary + 1) % servers
 	cfg.disconnect(transientBackup)
 	// replicate 5002 at oldPrimary and the remaining connected backup
-	cfg.replicateOne(oldPrimary, 5002, servers-1)
-	cfg.checkCommittedIndex(2, 5002, servers-1)
+	cfg.replicateOne(oldPrimary, 5002, majority(servers))
+	cfg.checkCommittedIndex(2, 5002, majority(servers))
 
 	// disconnect oldPrimary
 	cfg.disconnect(oldPrimary)
@@ -191,11 +193,11 @@ func Test1BSimpleViewChange(t *testing.T) {
 	cfg.viewChange(v1)
 	newPrimary := GetPrimary(v1, servers)
 
-	cfg.replicateOne(newPrimary, 5003, servers-1)
-	cfg.replicateOne(newPrimary, 5004, servers-1)
+	cfg.replicateOne(newPrimary, 5003, majority(servers))
+	cfg.replicateOne(newPrimary, 5004, majority(servers))
 
 	for i := 1; i <= 4; i++ {
-		cfg.checkCommittedIndex(i, 5000+i, servers-1)
+		cfg.checkCommittedIndex(i, 5000+i, majority(servers))
 	}
 
 	// try to replicate 10 commands 5002...5011 at old disconnected primary

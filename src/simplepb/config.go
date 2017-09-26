@@ -224,7 +224,7 @@ func (cfg *config) checkCommittedIndex(index int, command interface{}, expectedS
 			}
 		}
 	}
-	if nReplicated != expectedServers {
+	if nReplicated < expectedServers {
 		cfg.t.Fatalf("command %v replicated to %d servers, expected replication to %d servers\n", command, nReplicated, expectedServers)
 	}
 }
